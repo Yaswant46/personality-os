@@ -2,19 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Personality OS Dashboard</title>
+<title>Personality OS</title>
 <style>
 :root {
   --primary: #4c6ef5;
-  --secondary: #e9edff;
-  --background: #f7f9fc;
+  --secondary: #f0f4ff;
+  --background: #f9fbff;
   --card-bg: #ffffff;
-  --border-color: #d0d7e2;
+  --border: #d0d7e2;
 }
 body {
   font-family: Arial, sans-serif;
   margin: 0;
-  padding: 20px;
   background-color: var(--background);
   color: #333;
 }
@@ -22,219 +21,409 @@ header {
   background-color: var(--primary);
   color: white;
   padding: 20px;
-  border-radius: 8px;
+  text-align: center;
 }
-h1 { margin: 0; }
-section { margin-top: 20px; }
+nav {
+  background-color: var(--secondary);
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px;
+}
+nav a {
+  color: #333;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+nav a.active {
+  border-bottom: 2px solid var(--primary);
+}
+section { padding: 20px; display: none; }
+section.active { display: block; }
 .card {
   background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   padding: 15px;
-  margin-bottom: 15px;
   border-radius: 6px;
+  margin-bottom: 15px;
 }
 button {
   background-color: var(--primary);
   color: white;
   border: none;
   padding: 6px 12px;
-  margin-top: 4px;
   border-radius: 4px;
   cursor: pointer;
 }
-button.completed { background-color: #2f9e44; }
-table.calendar {
+button.completed {
+  background-color: #2f9e44;
+}
+table {
   width: 100%;
   border-collapse: collapse;
 }
-table.calendar th, table.calendar td {
-  border: 1px solid var(--border-color);
+table th, table td {
+  border: 1px solid var(--border);
   padding: 8px;
+  vertical-align: top;
 }
-.completed-row { opacity: 0.6; text-decoration: line-through; }
+small { color: #555; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Personality OS Dashboard</h1>
-  <p>Track your growth using psychological frameworks and personal insights.</p>
+  <h1>Personality OS</h1>
 </header>
+<nav>
+  <a id="homeTab" class="active">Home</a>
+  <a id="calendarTab">Calendar</a>
+  <a id="notesTab">Notes</a>
+</nav>
 
-<section id="overview">
- <h2>Overview</h2>
- <p>This dashboard uses models like the Iceberg Model, Big Five Traits, Self‑Determination Theory (SDT) and PERMA to guide self‑development. Use the sections below to reflect on your behaviours and beliefs.</p>
+<section id="homeSection" class="active">
+  <div class="card">
+    <h2>Welcome</h2>
+    <p id="quoteText"></p>
+  </div>
 </section>
 
-<section id="learningCalendar">
- <h2>Learning & Reflection Calendar (Next 3 Months)</h2>
- <p>Each day includes a micro-learning topic, a journaling prompt or an essay question. Mark complete when done!</p>
- <div id="learningTable"></div>
+<section id="calendarSection">
+  <div class="card">
+    <div style="display:flex; justify-content: space-between; align-items:center;">
+      <div>
+        <button id="prevBtn"><</button>
+        <button id="nextBtn">></button>
+      </div>
+      <div>
+        <select id="viewSelect">
+          <option value="day">Day</option>
+          <option value="week">Week</option>
+          <option value="month">Month</option>
+        </select>
+      </div>
+    </div>
+    <div id="calendarContainer" style="margin-top:15px;"></div>
+  </div>
 </section>
 
-<section id="workoutCalendar">
- <h2>Workout & Weight Log</h2>
- <p>Weekly routine: 2 days swimming, 2 days weights, 2 days sports, Wednesdays off. Record your weight daily.</p>
- <div id="workoutTable"></div>
-</section>
-
-<section id="notes">
- <h2>Growth Log & Notes</h2>
- <p>Add notes about daily wins, challenges and reflections. Tag them to frameworks or traits.</p>
- <textarea id="noteInput" rows="4" style="width:100%;" placeholder="Write your note here..."></textarea><br>
- <button id="addNoteBtn">Add Note</button>
- <ul id="notesList"></ul>
+<section id="notesSection">
+  <div class="card">
+    <h2>Growth Log & Notes</h2>
+    <textarea id="noteInput" rows="4" style="width:100%;" placeholder="Write your note here..."></textarea><br>
+    <button id="addNote">Add Note</button>
+    <ul id="noteList"></ul>
+  </div>
 </section>
 
 <script>
-// Utility to format date as YYYY-MM-DD
-function formatDate(d) {
-  const year = d.getFullYear();
-  const month = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  return `${year}-${month}-${day}`;
-}
-
-// Micro learning & journaling topics rotation
-const topics = [
-  {type:'Micro Learning', text:'Learn about the Iceberg Model and identify hidden beliefs behind actions.'},
-  {type:'Journaling', text:'Reflect on a recent challenge and how you felt beneath the surface.'},
-  {type:'Deep Thinking', text:'Write an essay on how your beliefs influence your behaviour.'},
-  {type:'Micro Learning', text:'Explore the Big Five traits and note where you score high or low.'},
-  {type:'Journaling', text:'Write about a time you felt autonomous, competent, and connected.'},
-  {type:'Deep Thinking', text:'Consider what flourishing means to you in the context of PERMA.'}
+// Quotes for home page
+const quotes = [
+  "Growth is never by mere chance; it is the result of forces working together.",
+  "Your personality is a work of art; shape it with intention.",
+  "Small daily improvements are the key to staggering long-term results.",
+  "Self-awareness is the foundation of self-mastery.",
+  "Every day is a chance to become a better version of yourself."
 ];
 
-// Workout schedule mapping by day of week (0=Sunday)
+// Topics for micro learning / journaling / essays
+const topics = [
+  { type:'Micro Learning', text:'Learn about the Iceberg Model and identify hidden beliefs behind actions.' },
+  { type:'Journaling', text:'Reflect on a recent challenge and how you felt beneath the surface.' },
+  { type:'Essay', text:'Write an essay on how your beliefs influence your behaviour.' },
+  { type:'Micro Learning', text:'Explore the Big Five traits and note where you score high or low.' },
+  { type:'Journaling', text:'Write about a time you felt autonomous, competent, and connected.' },
+  { type:'Essay', text:'Consider what flourishing means to you in the context of PERMA.' }
+];
+
+// Workout schedule (0=Sunday)
 const workoutSchedule = {
-  0: 'Sports',     // Sunday
-  1: 'Swimming',   // Monday
-  2: 'Weights',    // Tuesday
-  3: 'Rest',       // Wednesday (off)
-  4: 'Sports',     // Thursday
-  5: 'Swimming',   // Friday
-  6: 'Weights'     // Saturday
+  0:'Sports',
+  1:'Swimming',
+  2:'Weights',
+  3:'Rest',
+  4:'Sports',
+  5:'Swimming',
+  6:'Weights'
 };
 
-// Generate learning calendar for next 90 days
-function renderLearningCalendar() {
-  const container = document.getElementById('learningTable');
-  let html = '<table class="calendar"><tr><th>Date</th><th>Activity</th><th>Action</th></tr>';
-  const start = new Date();
-  for(let i=0; i<90; i++) {
-    const date = new Date(start);
-    date.setDate(start.getDate() + i);
-    const dateStr = formatDate(date);
-    const topic = topics[i % topics.length];
-    const key = 'learningComplete_' + dateStr;
-    const completed = localStorage.getItem(key) === 'true';
-    html += `<tr class="${completed ? 'completed-row' : ''}">
-      <td>${dateStr}</td>
-      <td><strong>${topic.type}:</strong> ${topic.text}</td>
-      <td><button data-date="${dateStr}" class="learnBtn ${completed ? 'completed' : ''}">${completed ? 'Done' : 'Mark Complete'}</button></td>
-    </tr>`;
+let currentDate = new Date();
+let currentView = 'day';
+
+function showSection(section) {
+  document.querySelectorAll('nav a').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+  if(section === 'home') {
+    document.getElementById('homeTab').classList.add('active');
+    document.getElementById('homeSection').classList.add('active');
+  } else if(section === 'calendar') {
+    document.getElementById('calendarTab').classList.add('active');
+    document.getElementById('calendarSection').classList.add('active');
+    renderCalendar();
+  } else if(section === 'notes') {
+    document.getElementById('notesTab').classList.add('active');
+    document.getElementById('notesSection').classList.add('active');
+    loadNotes();
+  }
+}
+
+function randomQuote() {
+  const q = quotes[Math.floor(Math.random() * quotes.length)];
+  document.getElementById('quoteText').textContent = q;
+}
+
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function getTopicForIndex(i) {
+  return topics[(i % topics.length + topics.length) % topics.length];
+}
+
+// Render functions for calendar
+function renderCalendar() {
+  const container = document.getElementById('calendarContainer');
+  const view = currentView;
+  if(view === 'day') {
+    renderDayView(container);
+  } else if(view === 'week') {
+    renderWeekView(container);
+  } else {
+    renderMonthView(container);
+  }
+}
+
+function renderDayView(container) {
+  const date = new Date(currentDate);
+  const today = new Date();
+  const diffDays = Math.floor((date - today) / (1000*60*60*24));
+  const dateStr = formatDate(date);
+  const topic = getTopicForIndex(diffDays);
+  const workout = workoutSchedule[date.getDay()];
+  const taskKey = 'taskComplete_'+dateStr;
+  const workoutKey = 'workoutComplete_'+dateStr;
+  const weightKey = 'weight_'+dateStr;
+  const taskDone = localStorage.getItem(taskKey) === 'true';
+  const workoutDone = localStorage.getItem(workoutKey) === 'true';
+  const weightVal = localStorage.getItem(weightKey) || '';
+  let html = '<h3>'+dateStr+'</h3>';
+  html += '<table><tr><th>Type</th><th>Description</th><th>Action</th></tr>';
+  html += `<tr><td>${topic.type}</td><td>${topic.text}</td><td><button class="taskBtn ${taskDone?'completed':''}" data-date="${dateStr}">${taskDone?'Done':'Mark Complete'}</button></td></tr>`;
+  html += `<tr><td>Workout</td><td>${workout}</td><td>`;
+  if(workout === 'Rest'){
+    html += 'Rest Day';
+  } else {
+    html += `<button class="workoutBtn ${workoutDone?'completed':''}" data-date="${dateStr}">${workoutDone?'Done':'Mark Complete'}</button>`;
+  }
+  html += '</td></tr>';
+  if(date.getDay() === 0) {
+    html += `<tr><td>Weight</td><td><input type="number" class="weightInput" data-date="${dateStr}" style="width:80px;" value="${weightVal}"></td><td></td></tr>`;
   }
   html += '</table>';
   container.innerHTML = html;
+  attachCalendarListeners();
+}
 
-  // attach event listeners
-  document.querySelectorAll('.learnBtn').forEach(btn => {
-    btn.addEventListener('click', function() {
+function renderWeekView(container) {
+  const temp = new Date(currentDate);
+  const start = new Date(temp);
+  start.setDate(temp.getDate() - temp.getDay()); // start on Sunday
+  let html = '<h3>Week of '+formatDate(start)+'</h3>';
+  html += '<table><tr>';
+  for(let i=0;i<7;i++){
+    const d = new Date(start);
+    d.setDate(start.getDate()+i);
+    html += '<th>'+formatDate(d)+'</th>';
+  }
+  html += '</tr><tr>';
+  for(let i=0;i<7;i++){
+    const d = new Date(start);
+    d.setDate(start.getDate()+i);
+    const dateStr = formatDate(d);
+    const diffDays = Math.floor((d - new Date())/(1000*60*60*24));
+    const topic = getTopicForIndex(diffDays);
+    const workout = workoutSchedule[d.getDay()];
+    const taskKey = 'taskComplete_'+dateStr;
+    const workoutKey = 'workoutComplete_'+dateStr;
+    const weightKey = 'weight_'+dateStr;
+    const taskDone = localStorage.getItem(taskKey)==='true';
+    const workoutDone = localStorage.getItem(workoutKey)==='true';
+    const weightVal = localStorage.getItem(weightKey)||'';
+    html += '<td>';
+    html += `<div><strong>${topic.type}</strong><br>${topic.text}<br><button class="taskBtn ${taskDone?'completed':''}" data-date="${dateStr}">${taskDone?'Done':'Mark'}</button></div>`;
+    html += `<div><strong>Workout:</strong> ${workout}<br>`;
+    if(workout==='Rest') {
+      html += 'Rest Day';
+    } else {
+      html += `<button class="workoutBtn ${workoutDone?'completed':''}" data-date="${dateStr}">${workoutDone?'Done':'Mark'}</button>`;
+    }
+    html += '</div>';
+    if(d.getDay()===0){
+      html += `<div><strong>Weight:</strong><input type="number" class="weightInput" data-date="${dateStr}" style="width:80px;" value="${weightVal}"></div>`;
+    }
+    html += '</td>';
+  }
+  html += '</tr></table>';
+  container.innerHTML = html;
+  attachCalendarListeners();
+}
+
+function renderMonthView(container) {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startDay = firstDay.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  let html = `<h3>${year}-${String(month+1).padStart(2,'0')}</h3>`;
+  html += '<table><tr>';
+  const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  daysOfWeek.forEach(d=>{ html += '<th>'+d+'</th>'; });
+  html += '</tr><tr>';
+  for(let i=0;i<startDay;i++){
+    html += '<td></td>';
+  }
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(year, month, day);
+    const dateStr = formatDate(d);
+    const diffDays = Math.floor((d - new Date())/(1000*60*60*24));
+    const topic = getTopicForIndex(diffDays);
+    const workout = workoutSchedule[d.getDay()];
+    const taskKey = 'taskComplete_'+dateStr;
+    const workoutKey = 'workoutComplete_'+dateStr;
+    const weightKey = 'weight_'+dateStr;
+    const taskDone = localStorage.getItem(taskKey)==='true';
+    const workoutDone = localStorage.getItem(workoutKey)==='true';
+    const weightVal = localStorage.getItem(weightKey)||'';
+    html += '<td style="min-width:140px;">';
+    html += '<div><strong>'+day+'</strong></div>';
+    html += `<div><small>${topic.type}</small> <button class="taskBtn ${taskDone?'completed':''}" data-date="${dateStr}">${taskDone?'\u2713':'Mark'}</button></div>`;
+    html += `<div><small>${workout}</small> `;
+    if(workout==='Rest') {
+      html += '';
+    } else {
+      html += `<button class="workoutBtn ${workoutDone?'completed':''}" data-date="${dateStr}">${workoutDone?'\u2713':'Mark'}</button>`;
+    }
+    html += '</div>';
+    if(d.getDay()===0){
+      html += `<div><small>Wt:</small><input type="number" class="weightInput" data-date="${dateStr}" style="width:60px;" value="${weightVal}"></div>`;
+    }
+    html += '</td>';
+    if((startDay + day) % 7 === 0 && day !== daysInMonth){
+      html += '</tr><tr>';
+    }
+  }
+  const totalCells = startDay + daysInMonth;
+  const remaining = 7 - (totalCells % 7);
+  if(remaining < 7){
+    for(let i=0;i<remaining;i++){
+      html += '<td></td>';
+    }
+  }
+  html += '</tr></table>';
+  container.innerHTML = html;
+  attachCalendarListeners();
+}
+
+function attachCalendarListeners() {
+  document.querySelectorAll('.taskBtn').forEach(btn=>{
+    btn.addEventListener('click', function(){
       const dateStr = this.getAttribute('data-date');
-      const key = 'learningComplete_' + dateStr;
-      const isDone = localStorage.getItem(key) === 'true';
-      if(!isDone) {
+      const key = 'taskComplete_'+dateStr;
+      if(localStorage.getItem(key)==='true') {
+        localStorage.removeItem(key);
+      } else {
         localStorage.setItem(key, 'true');
+      }
+      renderCalendar();
+    });
+  });
+  document.querySelectorAll('.workoutBtn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const dateStr = this.getAttribute('data-date');
+      const key = 'workoutComplete_'+dateStr;
+      if(localStorage.getItem(key)==='true') {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, 'true');
+      }
+      renderCalendar();
+    });
+  });
+  document.querySelectorAll('.weightInput').forEach(input=>{
+    input.addEventListener('change', function(){
+      const dateStr = this.getAttribute('data-date');
+      const key = 'weight_'+dateStr;
+      if(this.value) {
+        localStorage.setItem(key, this.value);
       } else {
         localStorage.removeItem(key);
       }
-      renderLearningCalendar();
     });
   });
 }
 
-// Generate workout calendar for next 90 days
-function renderWorkoutCalendar() {
-  const container = document.getElementById('workoutTable');
-  let html = '<table class="calendar"><tr><th>Date</th><th>Workout</th><th>Weight (kg)</th><th>Action</th></tr>';
-  const start = new Date();
-  for(let i=0; i<90; i++) {
-    const date = new Date(start);
-    date.setDate(start.getDate() + i);
-    const dateStr = formatDate(date);
-    const day = date.getDay();
-    const workout = workoutSchedule[day];
-    const completeKey = 'workoutComplete_' + dateStr;
-    const weightKey = 'weight_' + dateStr;
-    const completed = localStorage.getItem(completeKey) === 'true';
-    const weightVal = localStorage.getItem(weightKey) || '';
-    html += `<tr class="${completed ? 'completed-row' : ''}">
-      <td>${dateStr}</td>
-      <td>${workout}</td>
-      <td><input type="number" step="0.1" min="0" style="width:80px;" data-date="${dateStr}" class="weightInput" value="${weightVal}" ${workout === 'Rest' ? 'disabled' : ''}></td>
-      <td><button data-date="${dateStr}" class="workoutBtn ${completed ? 'completed' : ''}" ${workout === 'Rest' ? 'disabled' : ''}>${workout === 'Rest' ? 'Rest Day' : (completed ? 'Done' : 'Mark Complete')}</button></td>
-    </tr>`;
-  }
-  html += '</table>';
-  container.innerHTML = html;
-
-  // attach weight input listeners
-  document.querySelectorAll('.weightInput').forEach(input => {
-    input.addEventListener('change', function() {
-      const dateStr = this.getAttribute('data-date');
-      const weightKey = 'weight_' + dateStr;
-      if(this.value) {
-        localStorage.setItem(weightKey, this.value);
-      } else {
-        localStorage.removeItem(weightKey);
-      }
-    });
-  });
-
-  // attach workout button listeners
-  document.querySelectorAll('.workoutBtn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const dateStr = this.getAttribute('data-date');
-      const completeKey = 'workoutComplete_' + dateStr;
-      const isDone = localStorage.getItem(completeKey) === 'true';
-      if(!isDone) {
-        localStorage.setItem(completeKey, 'true');
-      } else {
-        localStorage.removeItem(completeKey);
-      }
-      renderWorkoutCalendar();
-    });
-  });
-}
-
-// Notes functions
+// Notes
 function loadNotes() {
- const notes = JSON.parse(localStorage.getItem('notes') || '[]');
- const list = document.getElementById('notesList');
- list.innerHTML = '';
- notes.forEach((note) => {
-   const li = document.createElement('li');
-   li.textContent = note;
-   list.appendChild(li);
- });
+  const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+  const list = document.getElementById('noteList');
+  list.innerHTML = '';
+  notes.forEach(n=>{
+    const li = document.createElement('li');
+    li.textContent = n;
+    list.appendChild(li);
+  });
 }
 
-document.getElementById('addNoteBtn').addEventListener('click', function() {
- const input = document.getElementById('noteInput');
- const text = input.value.trim();
- if (text) {
-   const notes = JSON.parse(localStorage.getItem('notes') || '[]');
-   notes.push(text);
-   localStorage.setItem('notes', JSON.stringify(notes));
-   input.value = '';
-   loadNotes();
- }
+document.getElementById('addNote').addEventListener('click', function(){
+  const input = document.getElementById('noteInput');
+  const text = input.value.trim();
+  if(text) {
+    const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+    notes.push(text);
+    localStorage.setItem('notes', JSON.stringify(notes));
+    input.value = '';
+    loadNotes();
+  }
+});
+
+// Nav events
+document.getElementById('homeTab').addEventListener('click', ()=>{ showSection('home'); randomQuote(); });
+document.getElementById('calendarTab').addEventListener('click', ()=>{ showSection('calendar'); });
+document.getElementById('notesTab').addEventListener('click', ()=>{ showSection('notes'); });
+
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  if(currentView === 'day'){
+    currentDate.setDate(currentDate.getDate() - 1);
+  } else if(currentView === 'week'){
+    currentDate.setDate(currentDate.getDate() - 7);
+  } else {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+  }
+  renderCalendar();
+});
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  if(currentView === 'day'){
+    currentDate.setDate(currentDate.getDate() + 1);
+  } else if(currentView === 'week'){
+    currentDate.setDate(currentDate.getDate() + 7);
+  } else {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+  }
+  renderCalendar();
+});
+document.getElementById('viewSelect').addEventListener('change', function(){
+  currentView = this.value;
+  renderCalendar();
 });
 
 // Initialize
-renderLearningCalendar();
-renderWorkoutCalendar();
+randomQuote();
+showSection('home');
+renderCalendar();
 loadNotes();
-
 </script>
 </body>
 </html>
