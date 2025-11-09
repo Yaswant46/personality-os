@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Personality OS Dashboard</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 20px; line-height: 1.6; }
+header { background-color: #f5f5f5; padding: 20px; border-bottom: 1px solid #ddd; }
+h1 { margin: 0; }
+section { margin-top: 20px; }
+.card { background-color: #fafafa; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<header>
+<h1>Personality OS Dashboard</h1>
+<p>Track your growth using psychological frameworks and personal insights.</p>
+</header>
+<section id="overview">
+<h2>Overview</h2>
+<p>This dashboard uses models like the Iceberg Model, Big Five Traits, Self‑Determination Theory (SDT) and PERMA to guide self‑development. Use the sections below to reflect on your behaviours and beliefs.</p>
+</section>
+<section id="frameworks">
+<h2>Framework Summaries</h2>
+<div class="card">
+<h3>Iceberg Model</h3>
+<p>Behaviour is just the visible tip; beliefs, emotions and experiences lie beneath the surface ([www.munich-business-school.de](https://www.munich-business-school.de/en/l/business-studies-dictionary/iceberg-model)). Reflect on hidden drivers behind your actions.</p>
+</div>
+<div class="card">
+<h3>Big Five Traits (OCEAN)</h3>
+<p>Openness, Conscientiousness, Extraversion, Agreeableness and Neuroticism describe personality dimensions ([www.verywellmind.com](https://www.verywellmind.com/the-big-five-personality-dimensions-2795422)). Consider your strengths and areas for growth.</p>
+</div>
+<div class="card">
+<h3>Self‑Determination Theory</h3>
+<p>Meeting the needs for autonomy, competence and relatedness fuels motivation and well‑being ([www.verywellmind.com](https://www.verywellmind.com/what-is-self-determination-theory-2795387)).</p>
+</div>
+<div class="card">
+<h3>PERMA</h3>
+<p>Positive emotion, Engagement, Relationships, Meaning and Accomplishment are pillars of flourishing. Track activities that support each pillar.</p>
+</div>
+</section>
+<section id="notes">
+<h2>Growth Log & Notes</h2>
+<p>Add notes about daily wins, challenges and reflections. Tag them to frameworks or traits.</p>
+<textarea id="noteInput" rows="4" style="width:100%;" placeholder="Write your note here..."></textarea>
+<br>
+<button id="addNoteBtn">Add Note</button>
+<ul id="notesList"></ul>
+</section>
+<section id="planner">
+<h2>Action Planner</h2>
+<p>Create simple habits and actions based on growth mindset principles. Coming soon!</p>
+</section>
+<script>
+// Notes saved in localStorage to persist
+function loadNotes() {
+ const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+ const list = document.getElementById('notesList');
+ list.innerHTML = '';
+ notes.forEach((note, index) => {
+   const li = document.createElement('li');
+   li.textContent = note;
+   list.appendChild(li);
+ });
+}
+document.getElementById('addNoteBtn').addEventListener('click', function() {
+ const input = document.getElementById('noteInput');
+ const text = input.value.trim();
+ if (text) {
+   const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+   notes.push(text);
+   localStorage.setItem('notes', JSON.stringify(notes));
+   input.value = '';
+   loadNotes();
+ }
+});
+loadNotes();
+</script>
+</body>
+</html>
